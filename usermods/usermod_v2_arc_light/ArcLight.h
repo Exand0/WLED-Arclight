@@ -7,6 +7,8 @@
 class ArcLight : public Usermod {
    private:
     unsigned long previousCheckTime = 0;
+    unsigned long buttonHoldTime = 0;
+
     unsigned long delay = 2;
 
     unsigned char select_state = 0;  // 0 = brightness 1 = color
@@ -101,14 +103,19 @@ class ArcLight : public Usermod {
     void handleButtonState() {
         buttonState = digitalRead(swIo);
         if (previouButtonState != buttonState) {
-            Serial.println("mode:" + mode);
             if (buttonState == LOW) {
+                buttonHoldTime = millis();
                 mode = (mode + 1) % 4;
-                previouButtonState = buttonState;
                 Serial.println("mode:" + mode);
+            } else if (buttonState == HIGH && millis() - buttonHoldTime >= 1000) {
+                toggleOnOff();
+                stateUpdated(CALL_MODE_BUTTON);
+                mode = (mode - 1) % 4;
+                Serial.println("power off");
             }
             previouButtonState = buttonState;
         }
+
     }
 
     void loop() {
